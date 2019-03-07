@@ -28,7 +28,9 @@ class processor :
         self.nbatches = nbatches
         with open(self.inputFiles) as filelist:
             lines = [l.strip() for l in filelist.readlines()]
-        self.it = uproot.iterate(lines, treename, namedecode=decode, xrootdsource=dict(chunkbytes=80*1024, limitbytes=1024**3))
+        # self.cache = uproot.cache.ArrayCache(1024**3)
+        # self.it = uproot.iterate(lines, treename, namedecode=decode, cache=self.cache, xrootdsource=dict(chunkbytes=80*1024, limitbytes=100*1024**2))
+        self.it = uproot.iterate(lines, treename, namedecode=decode, xrootdsource=dict(chunkbytes=80*1024, limitbytes=100*1024**2))
         self.modules = modules
         ## Tracking the performance
         self.totalevents = 0
