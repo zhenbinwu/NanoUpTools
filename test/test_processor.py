@@ -10,10 +10,17 @@
 
 import sys
 import os
-sys.path.insert(1, "%s/.." % os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(1, "%s/../.." % os.path.dirname(os.path.abspath(__file__)))
 
-from framework import processor, module
-from modules.QCD_HEMStudy import QCDHEMVeto
+from NanoUpTools.framework import processor, module
+from NanoUpTools.modules.QCD_HEMStudy import QCDHEMVeto
 
-g = processor("out.root", "./TTbarInc.txt", [QCDHEMVeto("Testing")], nbatches=3)
-g.run()
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--inputFiles', default="./TTbarInc.txt", help='an integer for the accumulator')
+    parser.add_argument('--outputFile', default="out.root")
+    args = parser.parse_args()
+
+    g = processor(args.outputFile, args.inputFiles, [QCDHEMVeto("Testing")])
+    g.run()

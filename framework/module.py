@@ -22,11 +22,14 @@ class Module():
         self.folderName = folder
         self.hist = {}
 
-    def th1(self, name, xbins, xlow, xhigh, values, title="", xtitle="", ytitle="", \
+    def th1(self, name):
+        return self.hist[name]
+
+    def th1(self, name, xbins, xlow, xhigh, values, title="", xlabel="", ylabel="", \
             color=None, linecolor=None, markercolor=None, fillcolor=None,
             linewidth=None, linestyle=None, markersize=None, markerstyle=None, fillstyle=None):
         if name not in self.hist.keys():
-            newtitle = title+";"+xtitle+";"+ytitle
+            newtitle = title+";"+xlabel+";"+ylabel
             self.hist[name] = Hist(xbins, xlow, xhigh, name =name, title =newtitle)
         if isinstance(values, awkward.JaggedArray):
             self.hist[name].fill_array(values.flatten())
