@@ -41,8 +41,8 @@ class NanoTLorentzVectorArray(JaggedTLorentzVectorArray):
 
 
 class NanoTable(Table):
-    def __init__(self, columns1={}, *columns2, **columns3):
-        super(NanoTable, self).__init__(columns1={}, *columns2, **columns3)
+    def __init__(self, *args, **kwargs):
+        super(NanoTable, self).__init__(*args, **kwargs)
 
     def __getattr__(self,what):
         """

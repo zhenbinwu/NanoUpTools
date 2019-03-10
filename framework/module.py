@@ -13,6 +13,7 @@ import numpy as np
 import rootpy
 from rootpy.plotting import Hist
 
+from collections import OrderedDict
 import uproot
 import awkward
 import uproot_methods.classes.TLorentzVector
@@ -20,14 +21,16 @@ import uproot_methods.classes.TLorentzVector
 class Module():
     def __init__(self, folder):
         self.folderName = folder
-        self.hist = {}
+        self.hist = OrderedDict()
 
     def th1(self, name):
-        return self.hist[name]
+        return self.hist[ self.folderName+"_"+name]
 
-    def th1(self, name, xbins, xlow, xhigh, values, title="", xlabel="", ylabel="", \
+    def th1(self, name_, xbins, xlow, xhigh, values, title="", xlabel="", ylabel="", \
             color=None, linecolor=None, markercolor=None, fillcolor=None,
             linewidth=None, linestyle=None, markersize=None, markerstyle=None, fillstyle=None):
+        ## Create an unique name to prevent memory leak in ROOT
+        name = self.folderName+"_"+name_
         if name not in self.hist.keys():
             newtitle = title+";"+xlabel+";"+ylabel
             self.hist[name] = Hist(xbins, xlow, xhigh, name =name, title =newtitle)
