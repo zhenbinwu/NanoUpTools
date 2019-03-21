@@ -50,8 +50,11 @@ class processor :
 
         ## Iterate the file
         print("Hello! Start to read files...")
-        with open(self.inputFiles) as filelist:
-            lines = [l.strip() for l in filelist.readlines()]
+        if self.inputFiles.endswith(".root"):
+            lines=[self.inputFiles]
+        else:
+            with open(self.inputFiles) as filelist:
+                lines = [l.strip() for l in filelist.readlines()]
         # self.cache = uproot.cache.ArrayCache(1024**3)
         self.it = uproot.iterate(lines, treename, namedecode=decode, reportpath=True, reportfile=True, reportentries=True,
                                  xrootdsource=dict(chunkbytes=80*1024, limitbytes=100*1024**2))
