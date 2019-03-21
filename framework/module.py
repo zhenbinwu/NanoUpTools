@@ -72,6 +72,9 @@ class Module():
         outfile.cd()
         outfile.mkdir(self.folderName)
         outfile.cd(self.folderName)
-        [v.Write() for v in self.hist.values()]
+        for k, v in self.hist.items():
+            orgname = k.split("_", 1)[1]
+            v.SetName(orgname)
+            v.Write()
 
 
