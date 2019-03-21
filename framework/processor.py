@@ -25,9 +25,10 @@ from rootpy.plotting import Hist, Profile
 class processor :
     def __init__(self, outputfile, inputFiles, modules=[], nbatches=None, treename="Events", decode="utf8"):
         self.outputfile = outputfile
-        self.inputFiles=inputFiles
-        self.nbatches = nbatches
-        self.modules = modules
+        self.inputFiles = inputFiles
+        self.nbatches   = nbatches
+        self.modules    = modules
+        self.decode     = decode
         ## Tracking the process information
         self.isData = False
         self.isFastsim = False
@@ -115,6 +116,8 @@ class processor :
                 (self.totalevents, self.CalTimeLasted(self.totaltime), self.loadingtime/self.totaltime*100,\
                  self.analyzingtime/self.totaltime*100))
         print("Saving output to %s" % self.outputfile)
+        for m in self.modules:
+            m.endJob()
         outfile = root_open(self.outputfile, "RECREATE")
         outfile.cd()
         self.hEvents.Fill(0, self.totalevents)
@@ -135,7 +138,7 @@ class processor :
         Eventbranch = self.curTFile.get("Events")
         if "Stop0l_evtWeight" in Eventbranch:
             import re
-            infostr = Eventbranch.get("Stop0l_evtWeight").title
+            infostr = Eventbranch.get("Stop0l_evtWeight").title.decode(self.decode)
             mat =re.match(".*\(Lumi=([0-9]*[.]?[0-9]+)\)", infostr)
             if mat is not None:
                 self.Lumi = float(mat.group(1))

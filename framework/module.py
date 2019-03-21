@@ -23,8 +23,11 @@ class Module():
         self.folderName = folder
         self.hist = OrderedDict()
 
-    def th1(self, name):
+    def getth1(self, name):
         return self.hist[ self.folderName+"_"+name]
+
+    def setth1(self, name, th1):
+        self.hist[ self.folderName+"_"+name] = th1
 
     def th1(self, name_, xbins, xlow, xhigh, values, title="", xlabel="", ylabel="", \
             color=None, linecolor=None, markercolor=None, fillcolor=None,
@@ -34,7 +37,9 @@ class Module():
         if name not in self.hist.keys():
             newtitle = title+";"+xlabel+";"+ylabel
             self.hist[name] = Hist(xbins, xlow, xhigh, name =name, title =newtitle)
-        if isinstance(values, awkward.JaggedArray):
+        if values is None:
+            pass
+        elif isinstance(values, awkward.JaggedArray):
             self.hist[name].fill_array(values.flatten())
         elif isinstance(values, np.ndarray):
             self.hist[name].fill_array(values)
@@ -64,8 +69,12 @@ class Module():
             self.hist[name].SetFillColor(fillcolor)
         if fillstyle is not None:
             self.hist[name].SetFillStyle(fillstyle)
+        return self.hist[name]
 
     def analyze():
+        return True
+
+    def endJob(self):
         return True
 
     def SaveHist(self, outfile):

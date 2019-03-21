@@ -35,7 +35,7 @@ class NanoTLorentzVectorArray(JaggedTLorentzVectorArray):
         """
         if what in self.columns:
             return self[what]
-        thewhat = getattr(super(JaggedCandidateMethods,self),what)
+        thewhat = getattr(super(JaggedTLorentzVectorArray,self),what)
         if 'p4' in thewhat.columns: return self.fromjagged(thewhat)
         return thewhat
 
@@ -51,7 +51,7 @@ class NanoTable(Table):
         """
         if what in self.columns:
             return self[what]
-        thewhat = getattr(super(JaggedCandidateMethods,self),what)
+        thewhat = getattr(super(Table,self),what)
         return thewhat
 
 def Object(arrays, name, selection=None):
