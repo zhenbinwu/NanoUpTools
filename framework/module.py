@@ -79,7 +79,7 @@ class Module():
         if fillstyle is not None:
             self.hist[name].SetFillStyle(fillstyle)
 
-    def th2(self, name_, xvalues, yvalues, *bins, title="", xlabel="", ylabel="", \
+    def th2(self, name_, xvalues, yvalues, bins, title="", xlabel="", ylabel="", \
             color=None, linecolor=None, markercolor=None, fillcolor=None,
             linewidth=None, linestyle=None, markersize=None, markerstyle=None, fillstyle=None):
         '''

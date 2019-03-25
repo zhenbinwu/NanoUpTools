@@ -60,9 +60,9 @@ class P2L1Jet(Module):
         self.resolution= self.th1("PerfResolution", None, self.ptrange)
         self.response= self.th1("PerfResponse", None, self.ptrange)
         self.th2("GenJetetaphi", gen.eta, gen.phi,
-                 10, -5, 5   , 10, -5, 5   , title = "Gen Jet counts" )
+                 (10, -5, 5   , 10, -5, 5 )  , title = "Gen Jet counts" )
         self.th2("recoJetetaphi", jet.eta, jet.phi,
-                 10, -5, 5   , 10, -5, 5   , title = "Jet 2D" )
+                 (10, -5, 5   , 10, -5, 5  ) , title = "Jet 2D" )
 
         self.th1("nGenJet", gen.counts, 20, 0, 20,
                  title = "Gen Jet counts" , xlabel="NO of GenJet", ylabel="Events")
