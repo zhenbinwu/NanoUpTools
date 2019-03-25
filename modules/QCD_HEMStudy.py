@@ -23,21 +23,45 @@ class QCDHEMVeto(Module):
         pass
 
     def analyze(self, events):
+        # self.th1("nPDF" , 200, 0 , 200, events["nLHEPdfWeight"])
+        # self.th1("orgPU" , 200, 0 , 200, events["Pileup_nTrueInt"])
+        # self.th1("weightedPU" , 200, 0 , 200, events["Pileup_nTrueInt"]* events["puWeight"])
+        # self.th1("orgPV" , 200, 0 , 200, events["PV_npvsGood"])
+        # self.th1("weightedPV" , 200, 0 , 200, events["PV_npvsGood"]* events["puWeight"])
+        # return True
         stop = Object(events, "Stop0l")
         pas = Object(events, "Pass")
         met = Object(events, "MET")
         jet = Object(events, "Jet", events["Jet_Stop0l"])
 
-        HEMJets = (jet.eta > -2.8) & (jet.eta<-1.6) & (jet.phi > -1.37) & (jet.phi<-1.07)
+        HEMJets = (jet.eta > -3.0) & (jet.eta<-1.4) & (jet.phi > -1.57) & (jet.phi<-0.87)
         PassHEMVeto = [~np.any(k) for k in HEMJets]
+
+        HEMJets2 = (jet.pt > 30) & HEMJets
+        PassHEMVeto2 = [~np.any(k) for k in HEMJets2]
+
+        HEMJets3 = (jet.eta > -3.2) & (jet.eta<-1.2) & (jet.phi > -1.77) & (jet.phi<-0.67)
+        PassHEMVeto3 = [~np.any(k) for k in HEMJets3]
+
+        HEMJets4 = (jet.pt > 30) & HEMJets3
+        PassHEMVeto4 = [~np.any(k) for k in HEMJets4]
+
         BaseHEMVeto = PassHEMVeto & pas.Baseline
+        BaseHEMVeto2 = PassHEMVeto2 & pas.Baseline
+        BaseHEMVeto3 = PassHEMVeto3 & pas.Baseline
+        BaseHEMVeto4 = PassHEMVeto4 & pas.Baseline
 
         cutdict = {
             "NoCut" : np.ones(BaseHEMVeto.shape, dtype=bool),
             "Baseline" : pas.Baseline,
             "BaseHEMVeto" : BaseHEMVeto,
+            "BaseHEMVeto2" : BaseHEMVeto2,
+            "BaseHEMVeto3" : BaseHEMVeto3,
+            "BaseHEMVeto4" : BaseHEMVeto4,
         }
 
+
+                 
         for k, v in cutdict.items():
             self.th1("MET_" + k   , 100, 0 , 1000, met.pt[v],
                      title = "MET Passing %s " % k, xlabel="#slash{E}_{T} [GeV]", ylabel="Events")
