@@ -41,10 +41,45 @@ class P2L1Jet(Module):
                 self.color, self.markerstyle, self.markersize = v
                 break
 
+
+    def FillJetRate(self, jet):
+        self.th1("RatePT", jet.pt.max(), 100, 0, 500, trigRate=True, title="JetPt Rate;Jet Pt;Rate [kHz]")
+        self.th1("RatePTEta24", jet.pt[abs(jet.eta)<=2.4].max(), 100, 0, 500,
+                 trigRate=True, title="JetPt Rate;Jet Pt (#eta < 2.4);Rate [kHz]")
+        self.th1("RatePTEta30", jet.pt[abs(jet.eta)<=3].max(), 100, 0, 500,
+                 trigRate=True, title="JetPt Rate;Jet Pt (#eta <3);Rate [kHz]")
+        self.th1("DoubleJetRatePT", jet.pt.pad(2).fillna(0)[:, 1], 100, 0, 500,
+                 trigRate=True, title="JetPt DoubleJetRate;Jet Pt;DoubleJetRate [kHz]")
+        self.th1("DoubleJetRatePTEta24",
+                 jet.pt[abs(jet.eta)<=2.4].pad(2).fillna(0)[:, 1], 100, 0, 500,
+                 trigRate=True, title="JetPt DoubleJetRate;Jet Pt (#eta < 2.4);DoubleJetRate [kHz]")
+        self.th1("DoubleJetRatePTEta30",
+                 jet.pt[abs(jet.eta)<=3].pad(2).fillna(0)[:, 1], 100, 0, 500,
+                 trigRate=True, title="JetPt DoubleJetRate;Jet Pt (#eta <3);DoubleJetRate [kHz]")
+        self.th1("TriJetRatePT", jet.pt.pad(3).fillna(0)[:, 2], 100, 0, 400,
+                 trigRate=True, title="JetPt TriJetRate;Jet Pt;TriJetRate [kHz]")
+        self.th1("TriJetRatePTEta24",
+                 jet.pt[abs(jet.eta)<=2.4].pad(3).fillna(0)[:, 2], 100, 0, 400,
+                 trigRate=True, title="JetPt TriJetRate;Jet Pt (#eta < 2.4);TriJetRate [kHz]")
+        self.th1("TriJetRatePTEta30",
+                 jet.pt[abs(jet.eta)<=3].pad(3).fillna(0)[:, 2], 100, 0, 400,
+                 trigRate=True, title="JetPt TriJetRate;Jet Pt (#eta <3);TriJetRate [kHz]")
+        self.th1("QuadJetRatePT", jet.pt.pad(4).fillna(0)[:, 3], 100, 0, 200,
+                 trigRate=True, title="JetPt QuadJetRate;Jet Pt;QuadJetRate [kHz]")
+        self.th1("QuadJetRatePTEta24", jet.pt[abs(jet.eta)<=2.4].pad(4).fillna(0)[:, 3], 100, 0, 200,
+                 trigRate=True, title="JetPt QuadJetRate;Jet Pt (#eta < 2.4);QuadJetRate [kHz]")
+        self.th1("QuadJetRatePTEta30", jet.pt[abs(jet.eta)<=3].pad(4).fillna(0)[:, 3], 100, 0, 200,
+                 trigRate=True, title="JetPt QuadJetRate;Jet Pt (#eta <3);QuadJetRate [kHz]")
+
     def analyze(self, events):
         gen = Object(events, "GenJets")
         fj = Object(events, "al4L1"+self.jetID.split("L1")[-1])
         jet = Object(events, self.jetID)
+        if jet is None:
+            print(self.jetID, self.jetlabel)
+
+
+        self.FillJetRate(jet)
 
         x = jet.cross(gen)
         matched = x.i0.delta_r(x.i1) < 0.4
@@ -52,11 +87,8 @@ class P2L1Jet(Module):
         self.th1("localJetResponse", response, 40, 0, 2, title = "Jet Response",
                  xlabel="JetResponse", ylabel="Events", color=self.color)
 
-        if jet is None:
-            print(self.jetID, self.jetlabel)
         jet30 = jet[jet.pt >30]
         matchjet = jet[jet.gendr < 0.4]
-
         self.resolution= self.th1("PerfResolution", None, self.ptrange)
         self.response= self.th1("PerfResponse", None, self.ptrange)
         self.th2("GenJetetaphi", gen.eta, gen.phi,
@@ -67,7 +99,7 @@ class P2L1Jet(Module):
         self.th1("nGenJet", gen.counts, 20, 0, 20,
                  title = "Gen Jet counts" , xlabel="NO of GenJet", ylabel="Events")
         self.th1("GenJetPt", gen.pt, self.ptrange , title = "Gen Jet pt", xlabel="GenJet p_{T} [GeV]", ylabel="Events")
-        self.th1("RecoJetPt", jet.pt, self.ptrange , title = "Reco Jet pt", xlabel="RecoJet p_{T} [GeV]", ylabel="Events")
+        self.th1("RecoJetPt", jet.pt, 200, 0, 600 , title = "Reco Jet pt", xlabel="RecoJet p_{T} [GeV]", ylabel="Events")
         self.th1("LeadingRecoJetPt", jet.pt.max(), 200, 0, 600   , title = "Leading Reco Jet pt", xlabel="Leading RecoJet p_{T} [GeV]", ylabel="Events")
         self.th1("LeadingRecoJetEta", jet.eta[jet.pt.argmax()], 10, -10, 10   , title = "Leading Reco Jet eta", xlabel="Leading RecoJet #eta", ylabel="Events")
         self.th1("nRecoJet", jet.counts, 20, 0, 20   , title = "Reco Jet counts", xlabel="NO of RecoJet", ylabel="Events")
@@ -82,12 +114,17 @@ class P2L1Jet(Module):
             highpt = self.ptrange[i+1]
             selmatch = matchjet [(matchjet.genpt > lowpt) & (matchjet.genpt < highpt) ]
             self.th1("JetResponse_pt%d_%d" % (lowpt, highpt), selmatch.pt / selmatch.genpt, 40, 0, 2  , title = "Jet Response" )
+        self.eff = self.get_hist("matchGenJetPt").Clone("eff")
 
-    def endJob(self):
+    def endJob(self, totalevents):
+        ## Scale up rate plot
+        for k, v in self.hist.items():
+            if "Rate" in k :
+                v.Scale((11246 * 2808.0) / (totalevents*1000.0))
+
         ## Jet EFFciciency
-        eff = self.get_hist("matchGenJetPt").Clone("eff")
-        eff.Divide(self.gethist("GenJetPt"))
-        self.set_hist("JetEfficiency", eff)
+        self.eff.Divide(self.get_hist("GenJetPt"))
+        self.set_hist("JetEfficiency", self.eff)
 
         # ## Jet Response and resolution
         means = []
@@ -96,12 +133,14 @@ class P2L1Jet(Module):
         for i in range(len(self.ptrange)-1):
             lowpt = self.ptrange[i]
             highpt = self.ptrange[i+1]
-            means.append(self.gethist("JetResponse_pt%d_%d" % (lowpt, highpt)).GetMean())
-            RMSs.append(self.gethist("JetResponse_pt%d_%d" % (lowpt, highpt)).GetStdDev())
+            means.append(self.get_hist("JetResponse_pt%d_%d" % (lowpt, highpt)).GetMean())
+            RMSs.append(self.get_hist("JetResponse_pt%d_%d" % (lowpt, highpt)).GetStdDev())
 
         for i in range(len(self.ptrange)-1):
             self.response.SetBinContent(i+1, means[i])
-            self.resolution.SetBinContent(i+1, RMSs[i]/means[i])
+            if means[i] != 0:
+                self.resolution.SetBinContent(i+1, RMSs[i]/means[i])
+            else:
+                self.resolution.SetBinContent(i+1, 0)
 
         return True
-

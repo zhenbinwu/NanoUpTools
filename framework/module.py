@@ -16,7 +16,6 @@ from rootpy.plotting import Hist, Hist2D
 from collections import OrderedDict
 import uproot
 import awkward
-import uproot_methods.classes.TLorentzVector
 
 class Module():
     def __init__(self, folder):
@@ -118,7 +117,7 @@ class Module():
         return self.hist[name]
 
     def th1(self, name_, values, xbins=None, xlow=0, xhigh=0, title="", xlabel="", ylabel="", \
-            color=None, linecolor=None, markercolor=None, fillcolor=None,
+            trigRate = False, color=None, linecolor=None, markercolor=None, fillcolor=None,
             linewidth=None, linestyle=None, markersize=None, markerstyle=None, fillstyle=None):
         ## Create an unique name to prevent memory leak in ROOT
         name = self.folderName+"_"+name_
@@ -132,20 +131,29 @@ class Module():
 
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Filling ~~~~~
         if values is None:
-            pass
-        elif isinstance(values, awkward.JaggedArray):
-            self.hist[name].fill_array(values.flatten())
-        elif isinstance(values, np.ndarray):
-            self.hist[name].fill_array(values)
+            return self.hist[name]
+
+        localvalue = None
+        if isinstance(values, awkward.JaggedArray):
+            localvalue = values.flatten()
+        elif not isinstance(values, (list, np.ndarray)):
+            localvalue = [values]
         else:
-            self.hist[name].Fill(values)
+            localvalue = values
+
+        if trigRate:
+            bins = np.fromiter(self.hist[name].xedges(), float)
+            upperidx = np.searchsorted(bins, localvalue)
+            self.hist[name].fill_array(np.concatenate([bins[:x] for x in upperidx]))
+        else:
+            self.hist[name].fill_array(localvalue)
 
         return self.hist[name]
 
     def analyze():
         return True
 
-    def endJob(self):
+    def endJob(self, totalevents):
         return True
 
     def SaveHist(self, outfile):
