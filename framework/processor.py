@@ -23,7 +23,7 @@ from rootpy.io import root_open
 from rootpy.plotting import Hist, Profile
 
 class processor :
-    def __init__(self, outputfile, inputFiles, modules=[], nbatches=None, treename="Events", decode="utf8"):
+    def __init__(self, outputfile, inputFiles, modules=[], branches=None, nbatches=None, treename="Events", decode="utf8"):
         self.outputfile = outputfile
         self.inputFiles = inputFiles
         self.nbatches   = nbatches
@@ -56,7 +56,7 @@ class processor :
             with open(self.inputFiles) as filelist:
                 lines = [l.strip() for l in filelist.readlines()]
         # self.cache = uproot.cache.ArrayCache(1024**3)
-        self.it = uproot.iterate(lines, treename, namedecode=decode, reportpath=True, reportfile=True, reportentries=True,
+        self.it = uproot.iterate(lines, treename, branches=branches,namedecode=decode, reportpath=True, reportfile=True, reportentries=True,
                                  xrootdsource=dict(chunkbytes=80*1024, limitbytes=100*1024**2))
 
     def BookGlobalHist(self):
