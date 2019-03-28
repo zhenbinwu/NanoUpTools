@@ -23,12 +23,6 @@ class QCDHEMVeto(Module):
         pass
 
     def analyze(self, events):
-        # self.th1("nPDF" , 200, 0 , 200, events["nLHEPdfWeight"])
-        # self.th1("orgPU" , 200, 0 , 200, events["Pileup_nTrueInt"])
-        # self.th1("weightedPU" , 200, 0 , 200, events["Pileup_nTrueInt"]* events["puWeight"])
-        # self.th1("orgPV" , 200, 0 , 200, events["PV_npvsGood"])
-        # self.th1("weightedPV" , 200, 0 , 200, events["PV_npvsGood"]* events["puWeight"])
-        # return True
         stop = Object(events, "Stop0l")
         pas = Object(events, "Pass")
         met = Object(events, "MET")
@@ -59,9 +53,12 @@ class QCDHEMVeto(Module):
             "BaseHEMVeto3" : BaseHEMVeto3,
             "BaseHEMVeto4" : BaseHEMVeto4,
         }
+        self.th1("nPDF"       , events["nLHEPdfWeight"]                       , 200 , 0 , 200 )
+        self.th1("orgPU"      , events["Pileup_nTrueInt"]                     , 200 , 0 , 200)
+        self.th1("weightedPU" , events["Pileup_nTrueInt"]* events["puWeight"] , 200 , 0 , 200)
+        self.th1("orgPV"      , events["PV_npvsGood"]                         , 200 , 0 , 200)
+        self.th1("weightedPV" , events["PV_npvsGood"]* events["puWeight"]     , 200 , 0 , 200)
 
-
-                 
         for k, v in cutdict.items():
             self.th1("MET_" + k        , met.pt[v]        , 100 , 0 , 1000 ,
                      title = "MET Passing %s " % k                    , xlabel="#slash{E}_{T} [GeV]"      , ylabel="Events")
