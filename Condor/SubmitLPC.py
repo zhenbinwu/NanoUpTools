@@ -9,16 +9,28 @@ import glob
 import tarfile
 import shutil
 import getpass
+import argparse
+from collections import defaultdict
 
 DelExe    = '../test/test_processor.py'
-OutDir = '/store/user/%s/Stop19/QCDHEMStudy/' %  getpass.getuser()
-tempdir = '/uscmst1b_scratch/lpc1/3DayLifetime/%s/TestCondor/' %  getpass.getuser()
-ProjectName = 'HEM_v1'
+# OutDir = '/store/user/%s/Phase2L1/JetPerf/' %  getpass.getuser()
+# OutDir = '/store/user/%s/Stop19/QCDHEMStudy/' %  getpass.getuser()
+OutDir = '/store/user/%s/Stop19/PUWeightfiles' %  getpass.getuser()
+tempdir = '/uscmst1b_scratch/lpc1/3DayLifetime/benwu/TestCondor/'
+ProjectName = 'PU_v5'
 argument = "--inputFiles=%s.$(Process).list --outputFile=%s_$(Process).root"
+# argument = "--inputFiles=%s.$(Process).list --outputFile=%s_$(Process).root --jettype=L1PuppiJets"
+defaultLperFile = 2000
 
 Process = {
-    "QCD_Good"              : ["Filelist/QCD_Good.list",              5  ],
-    "QCD_HEM"              : ["Filelist/QCD_HEM.list",              5  ],
+    # "QCD_Good"             : ["Filelist/QCD_Good.list",        5],
+    # "QCD_HEM"              : ["Filelist/QCD_HEM.list",         5],
+    # "T1bbbb_1500_100" : ["Filelist/T1bbbb_1500_100.list", 3],
+    # "T1tttt_2000_100" : ["Filelist/T1tttt_2000_100.list", 3],
+    # "T2tt_1200_100"   : ["Filelist/T2tt_1200_100.list",   3],
+    # "T2tt_850_100"    : ["Filelist/T2tt_850_100.list",    3],
+    "TTbar_PU200"    : ["Filelist/P2L1Jets.list",    250],
+
 }
 
 def tar_cmssw():
@@ -30,7 +42,7 @@ def tar_cmssw():
         if ans.lower()[0] == 'y':
             os.remove(cmsswtar)
         else:
-            return
+            return cmsswtar
 
     def exclude(tarinfo):
         if tarinfo.size > 100*1024*1024:
@@ -92,10 +104,11 @@ def SplitPro(key, file, lineperfile=20):
 
     return splitedfiles
 
-def my_process():
+def my_process(args):
     ## temp dir for submit
     global tempdir
     global ProjectName
+    global Process
     ProjectName = time.strftime('%b%d') + ProjectName
     tempdir = tempdir + os.getlogin() + "/" + ProjectName +  "/"
     try:
@@ -124,6 +137,8 @@ def my_process():
     ### Create Tarball
     NewNpro = {}
     Tarfiles = []
+    if args.config != "":
+        Process = ConfigList(os.path.abspath(args.config))
     for key, value in Process.items():
         if value[0] == "":
             value[0] = "../FileList/"+key+".list"
@@ -168,7 +183,24 @@ def GetProcess(key, value):
     else :
         return SplitPro(key, value[0], value[1])
 
+def ConfigList(config):
+    process = defaultdict(list)
+    lines = open(config).readlines()
+    for line_ in lines:
+        line = line_.strip()
+        if(len(line) <= 0 or line[0] == '#'):
+            continue
+        entry = line.split(",")
+        stripped_entry = [ i.strip() for i in entry]
+        process[stripped_entry[0]] = ["%s/%s" % (stripped_entry[1], stripped_entry[2]), defaultLperFile]
+    return process
+
 if __name__ == "__main__":
-    my_process()
+    parser = argparse.ArgumentParser(description='NanoAOD postprocessing.')
+    parser.add_argument('-c', '--config',
+        default = "",
+        help = 'Path to the input config file.')
+    args = parser.parse_args()
+    my_process(args)
 
 
