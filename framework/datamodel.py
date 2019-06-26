@@ -11,6 +11,7 @@
 import awkward
 import uproot_methods.classes.TLorentzVector
 import numpy as np
+from awkward import JaggedArray
 import uproot_methods
 from awkward.array.table import Table
 
@@ -77,3 +78,14 @@ def Object(arrays, name, selection=None):
     else:
         return jaggedarray[selection]
 
+def getvar(events, name, default=None, parents="run"):
+    if name in events:
+        return events[name]
+    if parents not in events:
+        return None
+    else:
+        if isinstance(events[parents], np.ndarray):
+            return np.full_like(events[parents], default)
+        if isinstance(events[parents], JaggedArray):
+            content = [default] * events[parents].flatten().shape[0]
+            return JaggedArray.fromoffsets(events[parents].offsets, content)

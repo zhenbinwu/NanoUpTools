@@ -19,7 +19,8 @@ from NanoUpTools.modules.QCD_HEMStudy import QCDHEMVeto
 
 class temp(Module):
     def analyze(self, events):
-        self.th1("pu_mc"      , events["Pileup_nTrueInt"] , 100 , 0 , 100)
+        self.th1("NJetsISR"      , events["nISRJets"] , 10 , 0 , 10)
+        self.th1("pu"      , events["nISRJets"] , 10 , 0 , 10)
 
 if __name__ == "__main__":
     import argparse
@@ -28,5 +29,5 @@ if __name__ == "__main__":
     parser.add_argument('--outputFile', default="out.root")
     args = parser.parse_args()
 
-    g = processor(args.outputFile, args.inputFiles, [temp("temp")], branches=["Pileup_nTrueInt"])
+    g = processor(args.outputFile, args.inputFiles, [temp("temp")], branches=["nISRJets"])
     g.run()

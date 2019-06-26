@@ -20,6 +20,7 @@ import awkward
 class Module():
     def __init__(self, folder):
         self.folderName = folder
+        self.cuts = set()
         self.hist = OrderedDict()
         self.color=None
         self.linecolor=None
@@ -30,6 +31,28 @@ class Module():
         self.markersize=None
         self.markerstyle=None
         self.fillstyle=None
+        ## Process info
+        self.isData         = False
+        self.isFastsim      = False
+        self.isSUSY         = False
+        self.Lumi           = 0
+        self.CrossSection   = 0
+        self.ExpectedNEvent = 0
+        self.era            = None
+        self.process        = None
+        self.period         = None
+        self.process_full   = None
+
+
+    def ObtainInfo(self, isData, isFastsim, isSUSY, Lumi, CrossSection, era, process, period):
+        self.isData         = isData
+        self.isFastsim      = isFastsim
+        self.isSUSY         = isSUSY
+        self.Lumi           = Lumi
+        self.CrossSection   = CrossSection
+        self.era            = era           
+        self.process        = process       
+        self.period         = period        
 
     def get_hist(self, name):
         return self.hist[ self.folderName+"_"+name]
@@ -38,10 +61,9 @@ class Module():
         self.hist[ self.folderName+"_"+name] = th1
 
 
-    def setHistStyle(self, name_, color_=None, linecolor_=None, markercolor_=None,
+    def setHistStyle(self, name, color_=None, linecolor_=None, markercolor_=None,
                      fillcolor_=None, linewidth_=None, linestyle_=None, markersize_=None,
                      markerstyle_=None, fillstyle_=None):
-        name = self.folderName+"_"+name_
         if name not in self.hist:
             print("Histogram is not defined yet! Not setting style for %s, exitting!" % name_)
         ## Setup the plotting, since TH1 inherited from TAttLine, TAttFill, TAttMarkerS
@@ -78,7 +100,7 @@ class Module():
         if fillstyle is not None:
             self.hist[name].SetFillStyle(fillstyle)
 
-    def th2(self, name_, xvalues, yvalues, bins, title="", xlabel="", ylabel="", \
+    def th2(self, name_, xvalues, yvalues, bins, title="", xlabel="", ylabel="", cut = None,
             color=None, linecolor=None, markercolor=None, fillcolor=None,
             linewidth=None, linestyle=None, markersize=None, markerstyle=None, fillstyle=None):
         '''
@@ -86,11 +108,16 @@ class Module():
             construction function
         '''
         ## Create an unique name to prevent memory leak in ROOT
-        name = self.folderName+"_"+name_
+        if cut is not None:
+            name = self.folderName+"_"+name_+"___"+cut
+            if cut not in self.cuts:
+                self.cuts.add(cut)
+        else:
+            name = self.folderName+"_"+name_
         if name not in self.hist.keys():
             newtitle = title+";"+xlabel+";"+ylabel
             self.hist[name] = Hist2D(*bins, name =name, title =newtitle)
-            self.setHistStyle(name_, color, linecolor, markercolor, fillcolor, linewidth, linestyle, markersize, markerstyle, fillstyle)
+            self.setHistStyle(name, color, linecolor, markercolor, fillcolor, linewidth, linestyle, markersize, markerstyle, fillstyle)
 
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Fill Th2 ~~~~~
         x = None
@@ -116,28 +143,39 @@ class Module():
 
         return self.hist[name]
 
-    def th1(self, name_, values, xbins=None, xlow=0, xhigh=0, title="", xlabel="", ylabel="", \
+    def th1(self, name_, values, xbins=None, xlow=0, xhigh=0, cut=None, weight=None, title="", xlabel="", ylabel="", \
             trigRate = False, color=None, linecolor=None, markercolor=None, fillcolor=None,
             linewidth=None, linestyle=None, markersize=None, markerstyle=None, fillstyle=None):
         ## Create an unique name to prevent memory leak in ROOT
-        name = self.folderName+"_"+name_
+        if cut is not None:
+            print(cut)
+            name = self.folderName+"_"+name_+"___"+cut
+            if cut not in self.cuts:
+                self.cuts.add(cut)
+        else:
+            name = self.folderName+"_"+name_
         if name not in self.hist:
             newtitle = title+";"+xlabel+";"+ylabel
             if isinstance(xbins, (list, np.ndarray)):
                 self.hist[name] = Hist(xbins, name =name, title =newtitle)
             else:
                 self.hist[name] = Hist(xbins, xlow, xhigh, name =name, title =newtitle)
-            self.setHistStyle(name_, color, linecolor, markercolor, fillcolor, linewidth, linestyle, markersize, markerstyle, fillstyle)
+            self.setHistStyle(name, color, linecolor, markercolor, fillcolor, linewidth, linestyle, markersize, markerstyle, fillstyle)
 
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Filling ~~~~~
         if values is None:
             return self.hist[name]
 
         localvalue = None
+        localweight = None
+        if weight is not None:
+            localweight = weight + values - values
         if isinstance(values, awkward.JaggedArray):
             localvalue = values.flatten()
+            localweight = localweight.flatten() if weight is not None else None
         elif not isinstance(values, (list, np.ndarray)):
             localvalue = [values]
+            localweight = [localweight] if weight is not None else None
         else:
             localvalue = values
 
@@ -146,7 +184,7 @@ class Module():
             upperidx = np.searchsorted(bins, localvalue)
             self.hist[name].fill_array(np.concatenate([bins[:x] for x in upperidx]))
         else:
-            self.hist[name].fill_array(localvalue)
+            self.hist[name].fill_array(localvalue, weights=localweight)
 
         return self.hist[name]
 
@@ -159,10 +197,25 @@ class Module():
     def SaveHist(self, outfile):
         outfile.cd()
         outfile.mkdir(self.folderName)
-        outfile.cd(self.folderName)
+        histmap = {"Default" : {}}
+        for c in self.cuts:
+            outfile.mkdir(self.folderName + "/"+c)
+            histmap[c] = {}
         for k, v in self.hist.items():
-            orgname = k.split("_", 1)[1]
-            v.SetName(orgname)
-            v.Write()
-
-
+            cutname = k.split("___", 1)[-1]
+            orgname = k.split("_", 1)[1].split("___", 1)[0]
+            if cutname in histmap.keys():
+                histmap[cutname][k] =  orgname
+            else:
+                histmap["Default"][k] =  orgname
+        for k, v in histmap.items():
+            outfile.cd()
+            if k is "Default":
+                outfile.cd(self.folderName)
+            else:
+                outfile.cd(self.folderName + "/"+k)
+            for j in v.keys():
+                h = self.hist[j]
+                h.SetName(v[j])
+                h.Write()
+        outfile.close()

@@ -24,17 +24,22 @@ from rootpy.plotting import Hist, Profile
 
 class processor :
     def __init__(self, outputfile, inputFiles, modules=[], branches=None, entrysteps=None, nbatches=None, treename="Events", decode="utf8"):
-        self.outputfile = outputfile
-        self.inputFiles = inputFiles
-        self.nbatches   = nbatches
-        self.modules    = modules
-        self.decode     = decode
+        self.outputfile     = outputfile
+        self.inputFiles     = inputFiles
+        self.nbatches       = nbatches
+        self.modules        = modules
+        self.decode         = decode
         ## Tracking the process information
-        self.isData = False
-        self.isFastsim = False
-        self.CrossSection = 0
-        self.Lumi = 0
+        self.isData         = False
+        self.isFastsim      = False
+        self.isSUSY         = False
+        self.Lumi           = 0
+        self.CrossSection   = 0
         self.ExpectedNEvent = 0
+        self.era            = 0
+        self.process        = None
+        self.period         = None
+        self.process_full   = None
         ## Tracking the global histogram
         self.BookGlobalHist()
         ## Tracking the reading
@@ -55,13 +60,17 @@ class processor :
         else:
             with open(self.inputFiles) as filelist:
                 lines = [l.strip() for l in filelist.readlines()]
-        # self.cache = uproot.cache.ArrayCache(1024**3)
-        self.it = uproot.iterate(lines, treename, branches=branches, namedecode=decode, entrysteps=entrysteps, reportpath=True, reportfile=True, reportentries=True,
-                                 xrootdsource=dict(chunkbytes=80*1024, limitbytes=100*1024**2))
+        # self.cache = uproot.cache.ArrayCache(200 *1024**2)
+        self.it = uproot.iterate(lines, treename, branches=branches,
+                                 # cache=self.cache,  
+                                 namedecode=decode,
+                                 entrysteps=entrysteps, reportpath=True,
+                                 reportfile=True, reportentries=True,
+                                 xrootdsource=dict(chunkbytes=80*1024, limitbytes=10*1024**2))
 
     def BookGlobalHist(self):
-        self.hEvents = Hist(4, 0, 4, name = "NEvent", title="Number of Events")
-        InfoLabels = ["isData", "isFastsim", "Lumi", "CrossSection", "GeneratedNEvent"]
+        self.hEvents = Hist(5, 0, 5, name = "NEvent", title="Number of Events")
+        InfoLabels = ["isData", "isFastsim", "Lumi", "CrossSection", "GeneratedNEvent", "era"]
         self.hInfo = Profile(len(InfoLabels), 0, len(InfoLabels), name="Info", title="Information of the process")
         [ self.hInfo.GetXaxis().SetBinLabel(i+1, n) for i, n in enumerate(InfoLabels) ]
 
@@ -95,7 +104,11 @@ class processor :
                 nEvents = end -start
                 self.totalevents = end
                 self.loadingtime += t1-t0
-                self.GetFileInformation()
+                if self.FirstEvent:
+                    self.GetFileInformation()
+                    for m in self.modules:
+                        m.ObtainInfo(self.isData, self.isFastsim, self.isSUSY, self.Lumi, self.CrossSection, self.era, self.process, self.period)
+                    self.FirstEvent = False
                 self.FillNEvent(self.events)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Running Modules ~~~~~
                 for m in self.modules:
@@ -125,18 +138,20 @@ class processor :
         outfile.cd()
         self.hEvents.Fill(0, self.totalevents)
         self.hEvents.Write()
+        if self.process_full is not None:
+            self.hInfo.SetTitle(self.process_full) 
+        self.hInfo.Fill(0, self.isData)
+        self.hInfo.Fill(1, self.isFastsim)
         self.hInfo.Fill(2, self.Lumi)
         self.hInfo.Fill(3, self.CrossSection)
         self.hInfo.Fill(4, self.ExpectedNEvent)
+        self.hInfo.Fill(5, self.era)
         self.hInfo.Write()
 
         for m in self.modules:
             m.SaveHist(outfile)
 
     def GetFileInformation(self):
-        if not self.FirstEvent:
-            return False
-        self.FirstEvent = False
 
         Eventbranch = self.curTFile.get("Events")
         if "Stop0l_evtWeight" in Eventbranch:
@@ -145,11 +160,28 @@ class processor :
             mat =re.match(".*\(Lumi=([0-9]*[.]?[0-9]+)\)", infostr)
             if mat is not None:
                 self.Lumi = float(mat.group(1))
-                return True
             mat =re.match(".*\(CrossSection=([0-9]*[.]?[0-9]+),\s+nEvent=([0-9]*[.]?[0-9]+)\)", infostr)
             if mat is not None:
                 self.CrossSection = float(mat.group(1))
-                self.ExpectedNEvent = float(mat.group(1))
-                return True
+                self.ExpectedNEvent = float(mat.group(2))
+            mat =re.match(".*for(.*)\(.*\)", infostr)
+            if mat is not None:
+                self.process_full = mat.groups()[0].strip()
+                mat2 = re.match("(.*)_(2016|2017|2018)(_Period(\w))?", self.process_full)
+                if mat2 is not None:
+                    self.process, self.era, _, self.period = mat2.groups()
+
+        if self.era is not None:
+            self.era = int(self.era)
+        if self.process is not None:
+            if "Data" in self.process:
+                self.isData = True
+            if "fastsim" in self.process:
+                self.isFastsim = True
+            if "SMS" in self.process:
+                self.isSUSY = True
+        ## Temp fix for v2p6 pro
+        if self.process is None:
+            self.isData = True
         return False
 

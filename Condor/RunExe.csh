@@ -17,7 +17,6 @@ cd ${CMSSW}
 eval `scramv1 runtime -csh` # cmsenv is an alias not on the workers
 echo "CMSSW: "$CMSSW_BASE
 
-xrdcp "root://cmseos.fnal.gov/${OUTPUT}/CMSSW.tgz" .
 tar -xzf CMSSW.tgz
 scram b 
 
@@ -44,7 +43,7 @@ python $EXE $argv
 if ($? == 0) then
   foreach outfile (`ls *root`)
     echo "Copying ${outfile} to ${OUTPUT}"
-    xrdcp $outfile "root://cmseos.fnal.gov/${OUTPUT}"
+    xrdcp -f $outfile "root://cmseos.fnal.gov/${OUTPUT}"
     if ($? == 0) then
       rm $outfile
     endif

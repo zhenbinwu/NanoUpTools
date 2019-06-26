@@ -15,12 +15,13 @@ from collections import defaultdict
 DelExe    = '../test/test_processor.py'
 # OutDir = '/store/user/%s/Phase2L1/JetPerf/' %  getpass.getuser()
 # OutDir = '/store/user/%s/Stop19/QCDHEMStudy/' %  getpass.getuser()
-OutDir = '/store/user/%s/Stop19/PUWeightfiles' %  getpass.getuser()
+OutDir = '/store/user/%s/Stop19/Check2018JetFrac' %  getpass.getuser()
 tempdir = '/uscmst1b_scratch/lpc1/3DayLifetime/benwu/TestCondor/'
-ProjectName = 'PU_v5'
+ProjectName = 'Test_2018v3'
+# ProjectName = 'Test_2016v3'
 argument = "--inputFiles=%s.$(Process).list --outputFile=%s_$(Process).root"
 # argument = "--inputFiles=%s.$(Process).list --outputFile=%s_$(Process).root --jettype=L1PuppiJets"
-defaultLperFile = 2000
+defaultLperFile = 2
 
 Process = {
     # "QCD_Good"             : ["Filelist/QCD_Good.list",        5],
@@ -29,14 +30,14 @@ Process = {
     # "T1tttt_2000_100" : ["Filelist/T1tttt_2000_100.list", 3],
     # "T2tt_1200_100"   : ["Filelist/T2tt_1200_100.list",   3],
     # "T2tt_850_100"    : ["Filelist/T2tt_850_100.list",    3],
-    "TTbar_PU200"    : ["Filelist/P2L1Jets.list",    250],
+    # "TTbar_PU200"    : ["Filelist/P2L1Jets.list",    250],
 
 }
 
 def tar_cmssw():
     print("Tarring up CMSSW, ignoring file larger than 100MB")
     cmsswdir = os.environ['CMSSW_BASE']
-    cmsswtar = os.path.abspath('%s/CMSSW.tar.gz' % tempdir)
+    cmsswtar = os.path.abspath('%s/CMSSW.tgz' % tempdir)
     if os.path.exists(cmsswtar):
         ans = raw_input('CMSSW tarball %s already exists, remove? [yn] ' % cmsswtar)
         if ans.lower()[0] == 'y':
@@ -68,7 +69,7 @@ def Condor_Sub(condor_file):
     os.chdir(curdir)
 
 
-def SplitPro(key, file, lineperfile=20):
+def SplitPro(key, file, lineperfile=defaultLperFile):
     splitedfiles = []
     filelistdir = tempdir + '/' + "FileList"
     try:
@@ -76,7 +77,12 @@ def SplitPro(key, file, lineperfile=20):
     except OSError:
         pass
 
-    filename = os.path.abspath(file)
+    filename = None
+    if "/store/" in file:
+        subprocess.call("xrdcp root://cmseos.fnal.gov/%s %s/%s_all.list" % (file, filelistdir, key), shell=True)
+        filename = os.path.abspath( "%s/%s_all.list" % (filelistdir, key))
+    else:
+        filename = os.path.abspath(file)
 
     f = open(filename, 'r')
     lines = f.readlines()
@@ -162,6 +168,7 @@ def my_process(args):
 
     ### Update condor files
     for key, value in Process.items():
+        projName = ProjectName+"_"+key
         arg = "\nArguments = " + argument % (key, key) + "\n Queue %d \n" % NewNpro[key]
 
         ## Prepare the condor file
@@ -171,7 +178,7 @@ def my_process(args):
                 line = line.replace("EXECUTABLE", os.path.abspath(RunHTFile))
                 line = line.replace("TARFILES", ", ".join(tarballnames))
                 line = line.replace("TEMPDIR", tempdir)
-                line = line.replace("PROJECTNAME", ProjectName)
+                line = line.replace("PROJECTNAME", projName)
                 line = line.replace("ARGUMENTS", arg)
                 outfile.write(line)
 

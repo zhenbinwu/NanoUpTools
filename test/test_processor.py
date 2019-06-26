@@ -14,13 +14,21 @@ sys.path.insert(1, "%s/../.." % os.path.dirname(os.path.abspath(__file__)))
 
 from NanoUpTools.framework import processor, module
 from NanoUpTools.modules.QCD_HEMStudy import QCDHEMVeto
+from NanoUpTools.modules.Stop_TTZ import StopTTZ
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--inputFiles', default="./TTbarInc.txt", help='an integer for the accumulator')
-    parser.add_argument('--outputFile', default="out.root")
+    parser.add_argument('-i', '--inputFiles', default="./TTbarInc.txt", help='an integer for the accumulator')
+    parser.add_argument('-o', '--outputFile', default="out.root")
     args = parser.parse_args()
 
-    g = processor(args.outputFile, args.inputFiles, [QCDHEMVeto("Testing")])
+    mods = [
+        QCDHEMVeto("Stop"),
+        # StopTTZ("TTZ")
+    ]
+
+    g = processor(args.outputFile, args.inputFiles, mods, entrysteps="100 MB",
+                  nbatches=2
+                 )
     g.run()
