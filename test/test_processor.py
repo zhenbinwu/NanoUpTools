@@ -29,6 +29,6 @@ if __name__ == "__main__":
     ]
 
     g = processor(args.outputFile, args.inputFiles, mods, entrysteps="100 MB",
-                  nbatches=2
+                  # nbatches=2
                  )
     g.run()

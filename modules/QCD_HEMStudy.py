@@ -26,6 +26,7 @@ class QCDHEMVeto(Module):
 
     def FillCut(self, k, v, events,met, stop, jet, weight):
         th1 = partial(self.th1, cut=k, weight=weight[v])
+        jth1 = partial(self.th1, cut=k, weight=None)
         th1("nElectron", events["Electron_Stop0l"].sum()[v], 5 , 0 , 5)
         th1("nMuon",     events["Muon_Stop0l"].sum()[v],     5 , 0 , 5)
         th1("MET"        , met.pt[v]        , 100 , 0 , 1000 , title = "MET"                    , xlabel="#slash{E}_{T} [GeV]"      , ylabel="Events")
@@ -50,29 +51,39 @@ class QCDHEMVeto(Module):
         CHM                = jet.chHadMult+jet.elMult+jet.muMult # pfjet->chargedMultiplicity();
         NumConst           = jet.nConstituents                   # pfjet->chargedMultiplicity()+pfjet->neutralMultiplicity();
 
-        th1("jeteta"       , jet.eta[v]  , 100 , -5 , 5    ,  title = "Jet eta"                         , xlabel ="Jet #eta"                        , ylabel="NO. of Jets" , color='blue')
-        th1("jetphi"       , jet.phi[v]  , 100 , -5 , 5    ,  title = "Jet phi"                         , xlabel ="Jet #phi"                        , ylabel="NO. of Jets" , color='blue')
-        th1("jetpt"        , jet.pt[v]   , 100 , 0  , 1000 ,  title = "Jet Pt"                          , xlabel ="Jet p_{T} [GeV]"                 , ylabel="NO. of Jets" , color='blue')
-        th1("jet_NHF"      , NHF[v]      , 10  , 0  , 1    ,  title = "Jet neutralHadronEnergyFraction" , xlabel ="Jet neutralHadronEnergyFraction" , ylabel="NO. of Jets" , color='blue')
-        th1("jet_NEMF"     , NEMF[v]     , 10  , 0  , 1    ,  title = "Jet neutralEmEnergyFraction"     , xlabel ="Jet neutralEmEnergyFraction"     , ylabel="NO. of Jets" , color='blue')
-        th1("jet_CHF"      , CHF[v]      , 10  , 0  , 1    ,  title = "Jet chargedHadronEnergyFraction" , xlabel ="Jet chargedHadronEnergyFraction" , ylabel="NO. of Jets" , color='blue')
-        th1("jet_MUF"      , MUF[v]      , 10  , 0  , 1    ,  title = "Jet muonEnergyFraction"          , xlabel ="Jet muonEnergyFraction"          , ylabel="NO. of Jets" , color='blue')
-        th1("jet_CEMF"     , CEMF[v]     , 10  , 0  , 1    ,  title = "Jet chargedEmEnergyFraction"     , xlabel ="Jet chargedEmEnergyFraction"     , ylabel="NO. of Jets" , color='blue')
-        th1("jet_CHM"      , CHM[v]      , 10  , 0  , 1    ,  title = "Jet chargedMultiplicity"         , xlabel ="Jet chargedMultiplicity"         , ylabel="NO. of Jets" , color='blue')
-        th1("jet_NumConst" , NumConst[v] , 10  , 0  , 100  ,  title = "Jet nConstituents"               , xlabel ="Jet nConstituents"               , ylabel="NO. of Jets" , color='blue')
+        jth1("jeteta"       , jet.eta[v]  , 100 , -5 , 5    ,  title = "Jet eta"                         , xlabel ="Jet #eta"                        , ylabel="NO. of Jets" , color='blue')
+        jth1("jetphi"       , jet.phi[v]  , 100 , -5 , 5    ,  title = "Jet phi"                         , xlabel ="Jet #phi"                        , ylabel="NO. of Jets" , color='blue')
+        jth1("jetpt"        , jet.pt[v]   , 100 , 0  , 1000 ,  title = "Jet Pt"                          , xlabel ="Jet p_{T} [GeV]"                 , ylabel="NO. of Jets" , color='blue')
+        jth1("jet_NHF"      , NHF[v]      , 10  , 0  , 1    ,  title = "Jet neutralHadronEnergyFraction" , xlabel ="Jet neutralHadronEnergyFraction" , ylabel="NO. of Jets" , color='blue')
+        jth1("jet_NEMF"     , NEMF[v]     , 10  , 0  , 1    ,  title = "Jet neutralEmEnergyFraction"     , xlabel ="Jet neutralEmEnergyFraction"     , ylabel="NO. of Jets" , color='blue')
+        jth1("jet_CHF"      , CHF[v]      , 10  , 0  , 1    ,  title = "Jet chargedHadronEnergyFraction" , xlabel ="Jet chargedHadronEnergyFraction" , ylabel="NO. of Jets" , color='blue')
+        jth1("jet_MUF"      , MUF[v]      , 10  , 0  , 1    ,  title = "Jet muonEnergyFraction"          , xlabel ="Jet muonEnergyFraction"          , ylabel="NO. of Jets" , color='blue')
+        jth1("jet_CEMF"     , CEMF[v]     , 10  , 0  , 1    ,  title = "Jet chargedEmEnergyFraction"     , xlabel ="Jet chargedEmEnergyFraction"     , ylabel="NO. of Jets" , color='blue')
+        jth1("jet_CHM"      , CHM[v]      , 10  , 0  , 1    ,  title = "Jet chargedMultiplicity"         , xlabel ="Jet chargedMultiplicity"         , ylabel="NO. of Jets" , color='blue')
+        jth1("jet_NumConst" , NumConst[v] , 10  , 0  , 100  ,  title = "Jet nConstituents"               , xlabel ="Jet nConstituents"               , ylabel="NO. of Jets" , color='blue')
 
-        jetsel = (jet.pt[v] > 20) & (jet.pt[v] < 30)& (abs(jet.eta[v]) < 2.4)
-        th1("jet20eta"       , jet.eta[v][jetsel]  , 100 , -5 , 5    ,  title = "Jet eta"                         , xlabel ="Jet #eta"                        , ylabel="NO. of Jets" , color='blue')
-        th1("jet20phi"       , jet.phi[v][jetsel]  , 100 , -5 , 5    ,  title = "Jet phi"                         , xlabel ="Jet #phi"                        , ylabel="NO. of Jets" , color='blue')
-        th1("jet20pt"        , jet.pt[v][jetsel]    , 100 , 0  , 1000 ,  title = "Jet Pt"                          , xlabel ="Jet p_{T} [GeV]"                 , ylabel="NO. of Jets" , color='blue')
-        th1("jet20_NHF"      , NHF[v][jetsel]      , 10  , 0  , 1    ,  title = "Jet neutralHadronEnergyFraction" , xlabel ="Jet neutralHadronEnergyFraction" , ylabel="NO. of Jets" , color='blue')
-        th1("jet20_NEMF"     , NEMF[v][jetsel]     , 10  , 0  , 1    ,  title = "Jet neutralEmEnergyFraction"     , xlabel ="Jet neutralEmEnergyFraction"     , ylabel="NO. of Jets" , color='blue')
-        th1("jet20_CHF"      , CHF[v][jetsel]       , 10  , 0  , 1    ,  title = "Jet chargedHadronEnergyFraction" , xlabel ="Jet chargedHadronEnergyFraction" , ylabel="NO. of Jets" , color='blue')
-        th1("jet20_MUF"      , MUF[v][jetsel]       , 10  , 0  , 1    ,  title = "Jet muonEnergyFraction"          , xlabel ="Jet muonEnergyFraction"          , ylabel="NO. of Jets" , color='blue')
-        th1("jet20_CEMF"     , CEMF[v][jetsel]      , 10  , 0  , 1    ,  title = "Jet chargedEmEnergyFraction"     , xlabel ="Jet chargedEmEnergyFraction"     , ylabel="NO. of Jets" , color='blue')
-        th1("jet20_CHM"      , CHM[v][jetsel]       , 10  , 0  , 1    ,  title = "Jet chargedMultiplicity"         , xlabel ="Jet chargedMultiplicity"         , ylabel="NO. of Jets" , color='blue')
-        th1("jet20_NumConst" , NumConst[v][jetsel]  , 10  , 0  , 100  ,  title = "Jet nConstituents"               , xlabel ="Jet nConstituents"               , ylabel="NO. of Jets" , color='blue')
-        th1("jet20_NumConst" , NumConst[v][jetsel] , 10  , 0  , 100  , title = "Jet nConstituents"               , xlabel ="Jet nConstituents"               , ylabel="NO. of Jets" , color='blue')
+        jetsel = jet[(jet.pt > 20) & (jet.pt < 30)& (abs(jet.eta) < 2.4)]
+        sPt       = jetsel.pt                           # pfjet->neutralHadronEnergyFraction();
+        sEta      = jetsel.eta                           # pfjet->neutralHadronEnergyFraction();
+        sPhi      = jetsel.phi                           # pfjet->neutralHadronEnergyFraction();
+        sNHF      = jetsel.neHEF                           # pfjet->neutralHadronEnergyFraction();
+        sNEMF     = jetsel.neEmEF                          # pfjet->neutralEmEnergyFraction();
+        sCHF      = jetsel.chHEF                           # pfjet->chargedHadronEnergyFraction();
+        sMUF      = jetsel.muEF                            # pfjet->muonEnergyFraction();
+        sCEMF     = jetsel.chEmEF                          # pfjet->chargedEmEnergyFraction();
+        sCHM      = jetsel.chHadMult+jetsel.elMult+jetsel.muMult # pfjet->chargedMultiplicity();
+        sNumConst = jetsel.nConstituents                   # pfjet->chargedMultiplicity()+pfjet->neutralMultiplicity();
+
+        jth1("jet20eta"       , sEta[v]  , 100 , -5 , 5    ,  title = "Jet eta"                         , xlabel ="Jet #eta"                        , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20phi"       , sPhi[v]  , 100 , -5 , 5    ,  title = "Jet phi"                         , xlabel ="Jet #phi"                        , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20pt"        , sPt[v]    , 100 , 0  , 1000 ,  title = "Jet Pt"                          , xlabel ="Jet p_{T} [GeV]"                 , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20_NHF"      , sNHF[v]      , 10  , 0  , 1    ,  title = "Jet neutralHadronEnergyFraction" , xlabel ="Jet neutralHadronEnergyFraction" , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20_NEMF"     , sNEMF[v]     , 10  , 0  , 1    ,  title = "Jet neutralEmEnergyFraction"     , xlabel ="Jet neutralEmEnergyFraction"     , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20_CHF"      , sCHF[v]       , 10  , 0  , 1    ,  title = "Jet chargedHadronEnergyFraction" , xlabel ="Jet chargedHadronEnergyFraction" , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20_MUF"      , sMUF[v]       , 10  , 0  , 1    ,  title = "Jet muonEnergyFraction"          , xlabel ="Jet muonEnergyFraction"          , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20_CEMF"     , sCEMF[v]      , 10  , 0  , 1    ,  title = "Jet chargedEmEnergyFraction"     , xlabel ="Jet chargedEmEnergyFraction"     , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20_CHM"      , sCHM[v]       , 10  , 0  , 1    ,  title = "Jet chargedMultiplicity"         , xlabel ="Jet chargedMultiplicity"         , ylabel="NO. of Jets" , color='blue')
+        jth1("jet20_NumConst" , sNumConst[v]  , 10  , 0  , 100  ,  title = "Jet nConstituents"               , xlabel ="Jet nConstituents"               , ylabel="NO. of Jets" , color='blue')
 
     def GetEventWeight(self, events):
         weights = np.sign(events["Stop0l_evtWeight"])
@@ -81,7 +92,7 @@ class QCDHEMVeto(Module):
         weights *= getvar(events, "BTagWeight", 1)
         weights *= getvar(events, "puWeight", 1)
         weights *= getvar(events, "PrefireWeight", 1)
-        weights *= getvar(events, "ISRWeight", 1)
+        # weights *= getvar(events, "ISRWeight", 1)
         # Lepton SF
         # weights *= events["Electron_VetoSF"][events["Electron_Stop0l"]].prod()
         # weights *= events["Muon_LooseSF"][events["Muon_Stop0l"]].prod()
@@ -134,6 +145,7 @@ class QCDHEMVeto(Module):
         trigger_MET = pas.trigger_MET
         if not self.isData:
             trigger_MET  = np.ones_like(trigger_MET)
+        trigger_MET = trigger_MET & pas.CaloMETRatio
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Selection ~~~~~
         CRdict = {

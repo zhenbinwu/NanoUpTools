@@ -148,7 +148,6 @@ class Module():
             linewidth=None, linestyle=None, markersize=None, markerstyle=None, fillstyle=None):
         ## Create an unique name to prevent memory leak in ROOT
         if cut is not None:
-            print(cut)
             name = self.folderName+"_"+name_+"___"+cut
             if cut not in self.cuts:
                 self.cuts.add(cut)
@@ -167,10 +166,11 @@ class Module():
             return self.hist[name]
 
         localvalue = None
-        localweight = None
-        if weight is not None:
-            localweight = weight + values - values
+        localweight = weight
         if isinstance(values, awkward.JaggedArray):
+            if weight is not None and values.flatten().size > 0:
+                print(weight, values, values.content, values.flatten().size)
+                localweight = weight + values - values
             localvalue = values.flatten()
             localweight = localweight.flatten() if weight is not None else None
         elif not isinstance(values, (list, np.ndarray)):
