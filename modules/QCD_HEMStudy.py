@@ -99,12 +99,15 @@ class QCDHEMVeto(Module):
         # weights *= events["Electron_VetoSF"][events["Electron_Stop0l"]]* events["Muon_LooseSF"][events["Muon_Stop0l"]]
         return weights
 
-    def analyze(self, events):
+    def analyze(self, events_):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Get objects ~~~~~
-        stop = Object(events, "Stop0l")
-        pas = Object(events, "Pass")
-        met = Object(events, "MET")
-        jet = Object(events, "Jet", events["Jet_Stop0l"])
+        stop = events_.jets
+        pas = events_.Pass
+        met = events_.MET
+        # stop = Object(events, "Stop0l")
+        # pas = Object(events, "Pass")
+        # met = Object(events, "MET")
+        # jet = Object(events, "Jet", events["Jet_Stop0l"])
 
         # ## 2016 JetID Tight
         # jetID1 = (np.abs(jet.eta) <=2.7 ) & ( jet.neHEF <0.90 ) & (jet.neEmEF < 0.90) & (jet.nConstituents > 1)  

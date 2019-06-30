@@ -9,11 +9,11 @@
 # Description :
 
 import awkward
-import uproot_methods.classes.TLorentzVector
 import numpy as np
 from awkward import JaggedArray
 import uproot_methods
 from awkward.array.table import Table
+from uproot_methods import TLorentzVectorArray
 
 ## awkward-array won't support attribute-style access of items as Pandas
 ## This has been discussed with Jim and understood
@@ -24,22 +24,6 @@ from awkward.array.table import Table
 ## https://github.com/CoffeaTeam/fnal-column-analysis-tools/blob/master/fnal_column_analysis_tools/analysis_objects/JaggedCandidateArray.py#L400
 
 JaggedTLorentzVectorArray = awkward.Methods.mixin(uproot_methods.classes.TLorentzVector.ArrayMethods, awkward.JaggedArray)
-
-class NanoTLorentzVectorArray(JaggedTLorentzVectorArray):
-    def __init__(self, *args, **kwargs):
-        super(NanoTLorentzVectorArray, self).__init__(*args, **kwargs)
-
-    def __getattr__(self,what):
-        """
-            extend get attr to allow access to columns,
-            gracefully thunk down to base methods
-        """
-        if what in self.columns:
-            return self[what]
-        thewhat = getattr(super(JaggedTLorentzVectorArray,self),what)
-        if 'p4' in thewhat.columns: return self.fromjagged(thewhat)
-        return thewhat
-
 
 class NanoTable(Table):
     def __init__(self, *args, **kwargs):
@@ -60,9 +44,7 @@ def Object(arrays, name, selection=None):
     matkeys = set([k for k in arrays.keys() if k.startswith("%s_" % name)])
 
     if "%s_mass" % name  in matkeys:
-        flatarray = uproot_methods.classes.TLorentzVector.TLorentzVectorArray.from_ptetaphim(
-            arrays["%s_pt" % name].content, arrays["%s_eta" % name].content, arrays["%s_phi" % name].content, arrays["%s_mass" % name].content)
-        jaggedarray = NanoTLorentzVectorArray.fromoffsets(arrays["%s_pt" % name].offsets, flatarray)
+        jaggedarray = TLorentzVectorArray.from_ptetaphim( arrays["%s_pt" % name], arrays["%s_eta" % name], arrays["%s_phi" % name], arrays["%s_mass" % name])
         matkeys = matkeys - {"%s_pt" % name, "%s_eta" % name, "%s_phi" % name, "%s_mass" % name}
 
     for k in matkeys:
@@ -71,6 +53,7 @@ def Object(arrays, name, selection=None):
         if jaggedarray is None:
             jaggedarray = NanoTable({'_': arrays[k]})
         _, att = k.split("%s_" % name, 1)
+        print(att, type(arrays[k]), arrays[k])
         jaggedarray[att] =arrays[k]
 
     if selection is None:

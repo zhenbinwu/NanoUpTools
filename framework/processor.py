@@ -23,12 +23,14 @@ from rootpy.io import root_open
 from rootpy.plotting import Hist, Profile
 
 class processor :
-    def __init__(self, outputfile, inputFiles, modules=[], branches=None, entrysteps=None, nbatches=None, treename="Events", decode="utf8"):
+    def __init__(self, outputfile, inputFiles, modules=[], branches=None, entrysteps="100 MB", nbatches=None, treename="Events", decode="utf8"):
         self.outputfile     = outputfile
         self.inputFiles     = inputFiles
         self.nbatches       = nbatches
         self.modules        = modules
         self.decode         = decode
+        self.treename       = treename
+        self.entrysteps = entrysteps
         ## Tracking the process information
         self.isData         = False
         self.isFastsim      = False
@@ -52,21 +54,15 @@ class processor :
         self.loadingtime = 0
         self.analyzingtime = 0
         self.totaltime  = 0
+        self.events= {}
 
         ## Iterate the file
         print("Hello! Start to read files...")
         if self.inputFiles.endswith(".root"):
-            lines=[self.inputFiles]
+            self.files=[self.inputFiles]
         else:
             with open(self.inputFiles) as filelist:
-                lines = [l.strip() for l in filelist.readlines()]
-        # self.cache = uproot.cache.ArrayCache(200 *1024**2)
-        self.it = uproot.iterate(lines, treename, branches=branches,
-                                 # cache=self.cache,  
-                                 namedecode=decode,
-                                 entrysteps=entrysteps, reportpath=True,
-                                 reportfile=True, reportentries=True,
-                                 xrootdsource=dict(chunkbytes=80*1024, limitbytes=10*1024**2))
+                self.files = [l.strip() for l in filelist.readlines()]
 
     def BookGlobalHist(self):
         self.hEvents = Hist(5, 0, 5, name = "NEvent", title="Number of Events")
@@ -95,21 +91,32 @@ class processor :
 
     def run(self):
         nbatch = 0
+        cache = {}
         self.startime = time.time()
-        while True:
-            try:
+        for file in self.files:
+            t = uproot.open(file)[self.treename]
+            # if self.FirstEvent:
+                # self.GetFileInformation(t)
+                # for m in self.modules:
+                    # m.ObtainInfo(self.isData, self.isFastsim, self.isSUSY, self.Lumi, self.CrossSection, self.era, self.process, self.period)
+                # self.FirstEvent = False
+            steps = list(t.mempartitions(self.entrysteps))
+            # arrays = t.lazyarrays(entrysteps=steps, cache=cache)
+            arrays = t.lazyarrays(profile="cms.nanosusy", entrysteps=steps, cache=cache)
+            print(steps, arrays)
+            for start, stop in steps:
                 t0 = time.time()
-                curfilename, self.curTFile, start, end, self.events = next(self.it)
+                self.events.clear()
+                events =  arrays[start:stop]
+                print(type(events))
+                print((events["jets"]))
                 t1 = time.time()
-                nEvents = end -start
-                self.totalevents = end
+                nEvents = stop -start
+                self.totalevents = stop
                 self.loadingtime += t1-t0
-                if self.FirstEvent:
-                    self.GetFileInformation()
-                    for m in self.modules:
-                        m.ObtainInfo(self.isData, self.isFastsim, self.isSUSY, self.Lumi, self.CrossSection, self.era, self.process, self.period)
-                    self.FirstEvent = False
                 self.FillNEvent(self.events)
+                print(events.jets)
+                print(events.raw)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Running Modules ~~~~~
                 for m in self.modules:
                     m.analyze(self.events)
@@ -121,10 +128,9 @@ class processor :
                     print("Finished run with %d batches" % nbatch)
                     self.EndRun()
                     break
-            except StopIteration:
-                print("End of the loop", sys.exc_info()[0])
-                self.EndRun()
-                break
+                cache.clear()
+        print("End of the loop")
+        self.EndRun()
 
     def EndRun(self):
         self.totaltime  = time.time() - self.startime
@@ -151,9 +157,8 @@ class processor :
         for m in self.modules:
             m.SaveHist(outfile)
 
-    def GetFileInformation(self):
-
-        Eventbranch = self.curTFile.get("Events")
+    def GetFileInformation(self, tree):
+        Eventbranch = tree
         if "Stop0l_evtWeight" in Eventbranch:
             import re
             infostr = Eventbranch.get("Stop0l_evtWeight").title.decode(self.decode)
