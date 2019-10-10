@@ -199,7 +199,7 @@ class Module():
         outfile.mkdir(self.folderName)
         histmap = {"Default" : {}}
         for c in self.cuts:
-            outfile.mkdir(self.folderName + "/"+c)
+            outfile.mkdir(self.folderName + "_"+c)
             histmap[c] = {}
         for k, v in self.hist.items():
             cutname = k.split("___", 1)[-1]
@@ -209,13 +209,11 @@ class Module():
             else:
                 histmap["Default"][k] =  orgname
         for k, v in histmap.items():
-            outfile.cd()
             if k is "Default":
                 outfile.cd(self.folderName)
             else:
-                outfile.cd(self.folderName + "/"+k)
+                outfile.cd(self.folderName + "_"+k)
             for j in v.keys():
                 h = self.hist[j]
                 h.SetName(v[j])
                 h.Write()
-        outfile.close()

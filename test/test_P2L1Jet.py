@@ -18,18 +18,20 @@ from NanoUpTools.modules.P2L1_JetPerf import P2L1Jet
 
 jetalgos = {
     "FJak4"       : "al4",
+    "It4"        : "itseed4",
+    "Seed4"        : "seed4",
     # "dRE4"        : "dRE4",
-    "dRE4Group"   : "dRE4Group",
-    "dRE4Tile"    : "dRE4Tile",
-    # "dRWTA4"      : "dRWTA4",
-    "dRWTA4Group" : "dRWTA4Group",
-    "dRWTA4Tile"  : "dRWTA4Title",
-    # "ktWTA4"      : "ktWTA4",
-    "ktWTA4Group" : "ktWTA4Group",
-    "ktWTA4Tile"  : "ktWTA4Tile",
-    # "ktE4"        : "ktE4",
-    "ktE4Group"   : "ktE4Group",
-    "ktE4Tile"    : "ktE4Tile",
+    # "dRE4Group"   : "dRE4Group",
+    # "dRE4Tile"    : "dRE4Tile",
+    # # "dRWTA4"      : "dRWTA4",
+    # "dRWTA4Group" : "dRWTA4Group",
+    # "dRWTA4Tile"  : "dRWTA4Title",
+    # # "ktWTA4"      : "ktWTA4",
+    # "ktWTA4Group" : "ktWTA4Group",
+    # "ktWTA4Tile"  : "ktWTA4Tile",
+    # # "ktE4"        : "ktE4",
+    # "ktE4Group"   : "ktE4Group",
+    # "ktE4Tile"    : "ktE4Tile",
 }
 
 mods = []
@@ -38,13 +40,12 @@ mods = []
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--inputFiles', default="./TTbarInc.txt", help='an integer for the accumulator')
-    parser.add_argument('--outputFile', default="out.root")
-    parser.add_argument('--jettype', default="L1PuppiJets")
+    parser.add_argument('-i', '--inputFiles', default="./TTbarInc.txt", help='an integer for the accumulator')
+    parser.add_argument('-o', '--outputFile', default="out.root")
+    parser.add_argument('-j', '--jettype', default="L1PuppiJets")
     args = parser.parse_args()
 
     for k, v in jetalgos.items():
         mods.append(P2L1Jet(k, jetlabel=k, jetID=v+args.jettype))
     g = processor(args.outputFile, args.inputFiles, mods)
-    # g = processor(args.outputFile, args.inputFiles, mods, nbatches=2 )
     g.run()

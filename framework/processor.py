@@ -150,6 +150,7 @@ class processor :
 
         for m in self.modules:
             m.SaveHist(outfile)
+        outfile.close()
 
     def GetFileInformation(self):
 
