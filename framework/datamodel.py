@@ -66,7 +66,7 @@ def Object(arrays, name, selection=None):
         matkeys = matkeys - {"%s_pt" % name, "%s_eta" % name, "%s_phi" % name, "%s_mass" % name}
 
     for k in matkeys:
-        if "Stop0l_HOT" in k: ##Temp fix for v1 Post-processing
+        if "Stop0l_HOT" in k or "sortedIdx" in k: ##Temp fix for v1 Post-processing
             continue
         if jaggedarray is None:
             jaggedarray = NanoTable({'_': arrays[k]})
